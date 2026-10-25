@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="header-titles">
+        <h2>{{ t('farmer_portal') }}</h2>
+        <p class="subtitle">Real-time claim status, missing document alerts, and agentic validation records.</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-primary" onclick="runAllAgentScans()">
+            ⚡ Scan All with Playwright Agent
+        </button>
+        <button class="btn btn-secondary" onclick="openEvidenceModal()">
+            📜 View SQLite Evidence Logs
+        </button>
+    </div>
+</div>
+
+<div class="claims-grid">
+    {% for claim in claims %}
+    <div class="claim-card card-status-{{ claim.claim_status_code|lower }}" id="claim-card-{{ claim.application_number }}">
+        <div class="card-top">
+            <div class="app-badge">
+                <span class="label">{{ t('application_no') }}:</span>
+                <strong>{{ claim.application_number }}</strong>
+            </div>
+            <div class="farmer-tag">
+                <span>👤 {{ claim.farmer_name }}</span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="info-row">
+                <div class="info-item">
+                    <span class="label">🌾 {{ t('crop') }}:</span>
+                    <span class="value font-semibold">{{ claim.crop }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">📅 {{ t('season') }}:</span>
+                    <span class="value font-semibold">{{ claim.season }}</span>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-item">
+                    <span class="label">🌱 {{ t('sowing_date') }}:</span>
+                    <span class="value">{{ claim.sowing_date }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">💰 {{ t('approved_amount') }}:</span>
+                    <span class="value text-success font-bold">{{ claim.approved_amount }}</span>
+                </div>
+            </div>
+
+            <hr class="card-divider"/>
+
+            <!-- Claim Status Section -->
+            <div class="status-block">
+                <span class="status-label">{{ t('claim_status') }}:</span>
+                <div class="status-pill status-{{ claim.claim_status_code|lower }}">
+                    {% if claim.claim_status_code == 'APPROVED' %}✅
+                    {% elif claim.claim_status_code == 'DOCUMENTS_REQUIRED' %}⚠️
+                    {% elif claim.claim_status_code == 'UNDER_REVIEW' %}🔍
+                    {% else %}📋{% endif %}
+                    {{ claim.claim_status_text }}
+                </div>
+            </div>
+
+            <!-- Missing Land Document Warning (TC2) -->
+            {% if claim.claim_status_code == 'DOCUMENTS_REQUIRED' %}
+            <div class="alert alert-warning">
+                <strong>🚨 {{ t('missing_document') }}:</strong>
+                <p>{{ claim.missing_document_text }}</p>
+                <div class="alert-actions">
+                    <a href="/portal/claim/{{ claim.application_number }}#upload-box" target="_blank" class="btn btn-sm btn-outline-warning">
+                        📄 View Mock Portal Upload Form
+                    </a>
+                    <button class="btn btn-sm btn-primary" onclick="requestDocumentUpload('{{ claim.application_number }}', 'Record of Rights (RoR / 7/12 Extract)')">
+                        🛡️ Propose Synthetic Upload via Agent
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Season Discrepancy Alert (TC3) -->
+            {% if claim.application_number == 'CROP-2026-TC3' and 'Kharif' in claim.season %}
+            <div class="alert alert-danger">
+                <strong>⚠️ {{ t('alert_season_mismatch') }}</strong>
+                <p>Wheat sown in November (winter) cannot be Kharif season! Expected: <strong>Rabi 2025-26</strong>.</p>
+                <div class="alert-actions">
+                    <a href="/approvals" class="btn btn-sm btn-danger">
+                        🛡️ Review Season Correction in Approvals
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Payment Disbursal Status (TC4) -->
+            <div class="payment-block">
+                <span class="status-label">{{ t('payment_status') }}:</span>
+                <div class="payment-pill pay-{{ claim.payment_status_code|lower }}">
+                    {% if claim.payment_status_code == 'BANK_CREDIT_CONFIRMED' %}
+                        💳 <strong>{{ claim.payment_status_text }}</strong>
+                        <div class="sub-ref">UTR: {{ claim.bank_reference_id }} | Credited: {{ claim.paid_amount }}</div>
+                    {% else %}
+                        ⏳ <strong>{{ claim.payment_status_text }}</strong>
+                        <div class="sub-ref text-muted">Claim approved, but funds are still in banking queue. Not paid yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <a href="/portal/claim/{{ claim.application_number }}" target="_blank" class="btn btn-sm btn-outline">
+                🔗 Open Mock Portal
+            </a>
+            <button class="btn btn-sm btn-dark" onclick="runSingleAgentScan('{{ claim.application_number }}')">
+                🤖 Run Agent Check
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- SQLite Evidence Modal -->
+<div id="evidence-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📜 SQLite Evidence Logs (Audit Trail)</h3>
+            <button class="modal-close" onclick="closeEvidenceModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-desc">All DOM extractions, validation findings, and agent safety gate audits recorded in SQLite.</p>
+            <div class="table-responsive">
+                <table class="data-table" id="evidence-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Claim No</th>
+                            <th>Test/Step</th>
+                            <th>Severity</th>
+                            <th>Finding</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="evidence-table-body">
+                        <tr><td colspan="6" class="text-center">Loading audit records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

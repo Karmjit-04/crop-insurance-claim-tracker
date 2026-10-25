@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Insurance Portal | PMFBY Registry</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="portal-body">
+    <div class="portal-header-bar">
+        <div class="portal-header-container">
+            <div class="gov-emblem">🏛️</div>
+            <div class="portal-titles">
+                <h2>PMFBY National Crop Insurance Registry [LOCAL MOCK PORTAL]</h2>
+                <p>Ministry of Agriculture & Farmers Welfare • Automated Inspection Target</p>
+            </div>
+            <div class="portal-links">
+                <a href="/" class="btn btn-sm btn-outline-light">← Back to Farmer Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="portal-container">
+        {% if msg %}
+        <div class="portal-alert portal-alert-{{ msg_type or 'info' }}">
+            {{ msg }}
+        </div>
+        {% endif %}
+
+        <div class="portal-card">
+            <div class="portal-card-header">
+                <h3>Official Claim Dossier</h3>
+                <span class="portal-serial">ID: <span id="dom-app-no">{{ claim.application_number }}</span></span>
+            </div>
+
+            <div class="portal-grid">
+                <div class="portal-field">
+                    <label>Farmer Beneficiary:</label>
+                    <div class="value" id="dom-farmer-name">{{ claim.farmer_name }}</div>
+                </div>
+                <div class="portal-field">
+                    <label>Contact Number:</label>
+                    <div class="value" id="dom-phone">{{ claim.phone_number }}</div>
+                </div>
+                <div class="portal-field">
+                    <label>Location / State & District:</label>
+                    <div class="value" id="dom-location">{{ claim.district }}, {{ claim.state }}</div>
+                </div>
+                <div class="portal-field">
+                    <label>Insured Crop:</label>
+                    <div class="value font-semibold" id="dom-crop">{{ claim.crop }}</div>
+                </div>
+                <div class="portal-field">
+                    <label>Crop Sowing Date:</label>
+                    <div class="value" id="dom-sowing-date">{{ claim.sowing_date }}</div>
+                </div>
+                <div class="portal-field">
+                    <label>Land Survey / Cadastral Number:</label>
+                    <div class="value font-mono" id="dom-survey-no">{{ claim.land_survey_no }}</div>
+                </div>
+                <div class="portal-field">
+                    <label>Declared Crop Season:</label>
+                    <div class="value font-bold text-accent" id="dom-season">{{ claim.season }}</div>
+                </div>
+                <div class="portal-field">
+                    <label>Official Claim Status:</label>
+                    <div class="badge-status badge-{{ claim.claim_status|lower }}" id="dom-claim-status" data-status="{{ claim.claim_status }}">
+                        {{ claim.claim_status }}
+                    </div>
+                </div>
+                <div class="portal-field">
+                    <label>Missing Land Document:</label>
+                    <div class="badge-missing {% if claim.missing_document != 'None' %}missing-warn{% else %}missing-clear{% endif %}" id="dom-missing-doc" data-missing="{{ claim.missing_document }}">
+                        {{ claim.missing_document }}
+                    </div>
+                </div>
+                <div class="portal-field">
+                    <label>Bank Disbursal Status:</label>
+                    <div class="badge-payment badge-pay-{{ claim.payment_status|lower }}" id="dom-payment-status" data-payment="{{ claim.payment_status }}">
+                        {{ claim.payment_status }}
+                    </div>
+                </div>
+                <div class="portal-field">
+                    <label>Approved Compensation:</label>
+                    <div class="value text-success font-bold" id="dom-approved-amt" data-amount="{{ claim.approved_amount }}">
+                        ₹{{ claim.approved_amount }}
+                    </div>
+                </div>
+                <div class="portal-field">
+                    <label>Confirmed Paid Amount:</label>
+                    <div class="value font-bold" id="dom-paid-amt" data-amount="{{ claim.paid_amount }}">
+                        ₹{{ claim.paid_amount }}
+                    </div>
+                </div>
+                <div class="portal-field full-width">
+                    <label>Bank Credit Reference / UTR Number:</label>
+                    <div class="value font-mono" id="dom-bank-ref">
+                        {{ claim.bank_reference_id or 'None (Awaiting confirmation from clearing house)' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portal Interactive Action Panels (Used by Playwright & Human Testing) -->
+        <div class="portal-actions-layout">
+            <!-- Season Update Box -->
+            <div class="portal-box" id="season-box">
+                <h4>✏️ Season Correction Form (Playwright Target)</h4>
+                <p>Used to resolve TC3 (Agronomic Season Mismatch). Requires Human Approval before Agent submission.</p>
+                <form action="/portal/claim/{{ claim.application_number }}/edit-season" method="POST" id="form-season">
+                    <div class="form-group">
+                        <label for="select-edit-season">Select Revised Season:</label>
+                        <select name="new_season" id="select-edit-season" class="form-control">
+                            <option value="Rabi 2025-26" {% if 'Rabi' in claim.season %}selected{% endif %}>Rabi 2025-26 (Winter Crops: Wheat, Mustard)</option>
+                            <option value="Kharif 2025" {% if 'Kharif' in claim.season %}selected{% endif %}>Kharif 2025 (Monsoon Crops: Paddy, Cotton)</option>
+                            <option value="Zaid 2026">Zaid 2026 (Summer Crops)</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="btn-submit-season" class="btn btn-primary">
+                        Save Season Correction to Portal
+                    </button>
+                </form>
+            </div>
+
+            <!-- Land Document Upload Box -->
+            <div class="portal-box" id="upload-box">
+                <h4>📄 Land Document Upload Form (Playwright Target)</h4>
+                <p>Used to resolve TC2 (Missing Land Document). Requires Human Approval before Agent submission.</p>
+                <form action="/portal/claim/{{ claim.application_number }}/upload-doc" method="POST" id="form-doc">
+                    <div class="form-group">
+                        <label for="input-doc-name">Document Title / Land Extract:</label>
+                        <input type="text" name="document_name" id="input-doc-name" class="form-control" 
+                               value="Record of Rights (RoR / Khasra-Khatauni 7/12)" placeholder="e.g. RoR Patta Extract">
+                    </div>
+                    <button type="submit" id="btn-submit-doc" class="btn btn-warning">
+                        Upload Document & Clear Deficiency
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

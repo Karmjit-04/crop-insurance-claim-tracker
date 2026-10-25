@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="header-titles">
+        <h2>🧪 Official Test Case Execution Center</h2>
+        <p class="subtitle">Agentic AI Hackathon 2026 Core Requirements & Invariants</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-primary" id="btn-run-tests" onclick="runAutomatedTestSuite()">
+            ▶️ Run All 4 Official Test Cases Now
+        </button>
+    </div>
+</div>
+
+<div class="test-cards-grid">
+    <!-- TC1 -->
+    <div class="test-card" id="tc1-card">
+        <div class="test-card-header">
+            <span class="test-badge">TC1</span>
+            <h4>हिन्दी दावा स्थिति वाचन (Hindi Claim Status)</h4>
+        </div>
+        <p class="test-desc">किसान की भाषा (हिन्दी) में दावे की स्थिति का बिना किसी त्रुटि के वाचन (जैसे 'दावा समिति द्वारा स्वीकृत')।</p>
+        <div class="test-target"><strong>Target Claim:</strong> CROP-2026-TC1</div>
+        <div class="test-status-indicator" id="tc1-status">Status: Ready to test</div>
+        <div class="test-details" id="tc1-details"></div>
+    </div>
+
+    <!-- TC2 -->
+    <div class="test-card" id="tc2-card">
+        <div class="test-card-header">
+            <span class="test-badge">TC2</span>
+            <h4>Identify Exact Missing Land Document</h4>
+        </div>
+        <p class="test-desc">Agent inspects portal DOM and accurately pinpoints the exact missing title/record (RoR / Khasra-Khatauni).</p>
+        <div class="test-target"><strong>Target Claim:</strong> CROP-2026-TC2</div>
+        <div class="test-status-indicator" id="tc2-status">Status: Ready to test</div>
+        <div class="test-details" id="tc2-details"></div>
+    </div>
+
+    <!-- TC3 -->
+    <div class="test-card" id="tc3-card">
+        <div class="test-card-header">
+            <span class="test-badge">TC3</span>
+            <h4>Detect Incorrect Season & HITL Correction</h4>
+        </div>
+        <p class="test-desc">Detects Wheat sown in Nov cannot be Kharif; proposes Rabi 2025-26; enforces human approval before changing portal.</p>
+        <div class="test-target"><strong>Target Claim:</strong> CROP-2026-TC3</div>
+        <div class="test-status-indicator" id="tc3-status">Status: Ready to test</div>
+        <div class="test-details" id="tc3-details"></div>
+    </div>
+
+    <!-- TC4 -->
+    <div class="test-card" id="tc4-card">
+        <div class="test-card-header">
+            <span class="test-badge">TC4</span>
+            <h4>Disbursal Invariant: Approved != Paid</h4>
+        </div>
+        <p class="test-desc">Guarantees that an approved claim in banking queue is NEVER reported as paid until bank credit reference is confirmed.</p>
+        <div class="test-target"><strong>Target Claim:</strong> CROP-2026-TC4</div>
+        <div class="test-status-indicator" id="tc4-status">Status: Ready to test</div>
+        <div class="test-details" id="tc4-details"></div>
+    </div>
+</div>
+
+<div class="test-history mt-4">
+    <h3>Historical Test Execution Records (SQLite)</h3>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Run ID</th>
+                    <th>Test ID</th>
+                    <th>Name</th>
+                    <th>Result</th>
+                    <th>Duration</th>
+                    <th>Details</th>
+                    <th>Executed At</th>
+                </tr>
+            </thead>
+            <tbody id="test-history-body">
+                {% for t in test_history %}
+                <tr>
+                    <td>#{{ t.id }}</td>
+                    <td><strong>{{ t.test_case_id }}</strong></td>
+                    <td>{{ t.test_name }}</td>
+                    <td>
+                        <span class="badge-status {% if t.status == 'PASS' %}badge-approved{% else %}badge-rejected{% endif %}">
+                            {{ t.status }}
+                        </span>
+                    </td>
+                    <td>{{ t.execution_time_seconds }}s</td>
+                    <td class="font-mono text-sm">{{ t.details }}</td>
+                    <td>{{ t.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center">No tests executed yet. Click "Run All 4 Official Test Cases Now" above.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

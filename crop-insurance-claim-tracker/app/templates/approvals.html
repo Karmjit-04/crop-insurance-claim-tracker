@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="header-titles">
+        <h2>🛡️ Human-in-the-Loop (HITL) Approvals</h2>
+        <p class="subtitle">Explicit human consent is mandatory before the Agentic Runner mutates portal records.</p>
+    </div>
+    <div class="header-actions">
+        <a href="/" class="btn btn-outline">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="approvals-container">
+    <h3>Pending Actions Awaiting Human Review</h3>
+    {% if pending_approvals %}
+    <div class="approvals-list">
+        {% for req in pending_approvals %}
+        <div class="approval-card" id="approval-card-{{ req.id }}">
+            <div class="approval-header">
+                <span class="badge-action">{{ req.action_type }}</span>
+                <span class="req-app-no">Claim: <strong>{{ req.application_number }}</strong></span>
+                <span class="req-time">{{ req.created_at }}</span>
+            </div>
+            <div class="approval-body">
+                <div class="value-comparison">
+                    <div class="val-box val-prev">
+                        <span class="val-title">Current Recorded Value</span>
+                        <div class="val-content">{{ req.previous_value }}</div>
+                    </div>
+                    <div class="val-arrow">➜</div>
+                    <div class="val-box val-prop">
+                        <span class="val-title">Agent Proposed Value</span>
+                        <div class="val-content">{{ req.proposed_value }}</div>
+                    </div>
+                </div>
+                <div class="approval-reason">
+                    <strong>Agent Rationale:</strong> {{ req.reason }}
+                </div>
+            </div>
+            <div class="approval-actions">
+                <button class="btn btn-success" onclick="resolveApproval({{ req.id }}, 'APPROVED', '{{ req.application_number }}', '{{ req.action_type }}', '{{ req.proposed_value }}')">
+                    ✅ Approve & Execute via Playwright Agent
+                </button>
+                <button class="btn btn-danger" onclick="resolveApproval({{ req.id }}, 'REJECTED', '{{ req.application_number }}', '{{ req.action_type }}', '{{ req.proposed_value }}')">
+                    ❌ Reject Action
+                </button>
+            </div>
+            <div class="action-feedback" id="feedback-{{ req.id }}" style="display:none;"></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h4>No Pending Approvals</h4>
+        <p>All agent proposed changes have been reviewed. Run an agent scan from the dashboard to detect new discrepancies.</p>
+    </div>
+    {% endif %}
+
+    <div class="history-section mt-4">
+        <h3>Resolved Approval Audit Log</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Claim No</th>
+                        <th>Action</th>
+                        <th>Proposed Value</th>
+                        <th>Decision</th>
+                        <th>Approved By</th>
+                        <th>Resolved At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in resolved_history %}
+                    <tr>
+                        <td>#{{ h.id }}</td>
+                        <td><strong>{{ h.application_number }}</strong></td>
+                        <td>{{ h.action_type }}</td>
+                        <td>{{ h.proposed_value }}</td>
+                        <td>
+                            <span class="badge-status {% if h.status == 'APPROVED' %}badge-approved{% else %}badge-rejected{% endif %}">
+                                {{ h.status }}
+                            </span>
+                        </td>
+                        <td>{{ h.approved_by or 'System' }}</td>
+                        <td>{{ h.resolved_at }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center">No resolved actions in history yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

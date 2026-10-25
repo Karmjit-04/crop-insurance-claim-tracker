@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('app_title') }} | Agentic AI Hackathon 2026</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">🌾</span>
+                <div class="brand-text">
+                    <h1>{{ t('app_title') }}</h1>
+                    <span class="badge-sub">Agentic AI Hackathon 2026</span>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+                    👨‍🌾 {{ t('farmer_portal') }}
+                </a>
+                <a href="/approvals" class="nav-item {% if request.path == '/approvals' %}active{% endif %}">
+                    🛡️ {{ t('pending_approvals') }} 
+                    <span class="counter-badge" id="pending-counter">{{ pending_count or 0 }}</span>
+                </a>
+                <a href="/tests" class="nav-item {% if request.path == '/tests' %}active{% endif %}">
+                    🧪 {{ t('test_cases') }}
+                </a>
+            </nav>
+            <div class="language-picker">
+                <span class="badge-sub" style="font-size: 0.9rem; padding: 0.4rem 0.8rem; background: #dcfce7; color: #166534; font-weight: 700;">
+                    🌐 भाषा: हिन्दी (Hindi Only)
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <p>100% स्थानीय • SQLite और Playwright स्वचालित • शून्य बाह्य/सशुल्क API • Hackathon 2026 सत्यापित</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
